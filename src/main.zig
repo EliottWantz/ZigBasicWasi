@@ -6,11 +6,11 @@ pub fn main() !void {
     var i: usize = 1;
     while (i <= 16) : (i += 1) {
         if (i % 15 == 0) {
-            try stdout.writeAll("ZigZag\n");
+            try stdout.writeAll("ZiggZagg\n");
         } else if (i % 3 == 0) {
-            try stdout.writeAll("Zig\n");
+            try stdout.writeAll("Zigg\n");
         } else if (i % 5 == 0) {
-            try stdout.writeAll("Zag\n");
+            try stdout.writeAll("Zagg\n");
         } else {
             try stdout.print("{d}\n", .{i});
         }
