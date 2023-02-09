@@ -2,35 +2,19 @@ const std = @import("std");
 const expect = @import("std").testing.expect;
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-
-    const elems = [_]u8{ 3, 4, 5 };
-    const len = elems.len;
-    std.debug.print("{d}\n", .{elems});
-    std.log.info("Elems len = {d}\n", .{len});
-
-    const string = [_]u8{ 'a', 'b', 'c' };
-
-    for (string) |char, index| {
-        std.log.info("Index = {d}, Char = {d}\n", .{ index, char });
+    const stdout = std.io.getStdOut().writer();
+    var i: usize = 1;
+    while (i <= 16) : (i += 1) {
+        if (i % 15 == 0) {
+            try stdout.writeAll("ZigZag\n");
+        } else if (i % 3 == 0) {
+            try stdout.writeAll("Zig\n");
+        } else if (i % 5 == 0) {
+            try stdout.writeAll("Zag\n");
+        } else {
+            try stdout.print("{d}\n", .{i});
+        }
     }
-
-    @setRuntimeSafety(false);
-    const a = [3]u8{ 1, 2, 3 };
-    var index: u8 = 5;
-    const b = a[index];
-    std.log.info("What is the value of b? {d}\n", .{b}); // It takes the last elem in array
-
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    var bw = std.io.bufferedWriter(std.io.getStdOut().writer());
-    const stdout = bw.writer();
-
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
 }
 
 test "simple test" {
@@ -228,4 +212,128 @@ test "emum method" {
     const mySuit: Suit = Suit.hearts;
     try expect(mySuit.isHearts());
     try expect(Suit.isHearts(Suit.clubs) == Suit.isClubs(.hearts));
+}
+
+const Mode = enum {
+    var count: u8 = 0;
+    on,
+    off,
+};
+
+test "increment enum var" {
+    try expect(Mode.count == 0);
+    Mode.count += 1;
+    try expect(Mode.count == 1);
+}
+
+const Vec3 = struct {
+    x: f32,
+    y: f32,
+    z: f32,
+};
+
+test "struct" {
+    const my_vector = Vec3{
+        .x = 0,
+        .y = 100,
+        .z = 3.14,
+    };
+
+    _ = my_vector;
+}
+
+const Vec4 = struct { x: f32, y: f32, z: f32 = 0, w: f32 = undefined };
+
+test "struct defaults" {
+    const my_vector = Vec4{
+        .x = 25,
+        .y = -50,
+    };
+    _ = my_vector;
+}
+
+const Stuff = struct {
+    x: i32,
+    y: i32,
+
+    fn swap(s: *Stuff) void {
+        const tmp = s.x;
+        s.x = s.y;
+        s.y = tmp;
+    }
+};
+
+test "automatic dereference" {
+    var thing = Stuff{ .x = 10, .y = 20 };
+    thing.swap();
+    try expect(thing.x == 20);
+    try expect(thing.y == 10);
+}
+
+fn rangeHasNumber(begin: usize, end: usize, number: usize) bool {
+    var i = begin;
+    return while (i < end) : (i += 1) {
+        if (i == number) {
+            break true;
+        }
+    } else false;
+}
+
+test "while loop expression" {
+    try expect(rangeHasNumber(0, 10, 3));
+}
+
+test "optional" {
+    var found_index: ?usize = null;
+    const data = [_]i32{ 1, 2, 3, 4, 5, 6, 7, 8, 12 };
+    for (data) |v, i| {
+        if (v == 10) found_index = i;
+    }
+    try expect(found_index == null);
+}
+
+test "orelse" {
+    var a: ?f32 = null;
+    var b = a orelse 0;
+    try expect(b == 0);
+    try expect(@TypeOf(b) == f32);
+}
+
+// .? is a shorthand for orelse unreachable, a bit like unwrap in rust
+test "orelse unreachable" {
+    const a: ?f32 = 5;
+    const b = a orelse unreachable;
+    const c = a.?;
+    try expect(b == c);
+    try expect(@TypeOf(c) == f32);
+    try expect(a == b and a == c);
+}
+
+test "if optional payload capture" {
+    const a: ?i32 = 5;
+    if (a != null) {
+        const value = a.?;
+        _ = value;
+    }
+
+    var b: ?i32 = 5;
+    if (b) |*value| {
+        value.* += 1;
+    }
+    try expect(b.? == 6);
+}
+
+var numbers_left: u32 = 4;
+fn eventuallyNullSequence() ?u32 {
+    if (numbers_left == 0) return null;
+    numbers_left -= 1;
+    return numbers_left;
+}
+
+test "while null capture" {
+    var sum: u32 = 0;
+    while (eventuallyNullSequence()) |value| {
+        sum += value;
+    }
+    try expect(sum == 6); // 3 + 2 + 1
 }
