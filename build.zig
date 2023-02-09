@@ -16,6 +16,11 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
     exe.install();
 
+    const exe_wasm = b.addExecutable("basic", "src/main.zig");
+    exe_wasm.setTarget(std.zig.CrossTarget{ .cpu_arch = .wasm32, .os_tag = .wasi });
+    exe_wasm.setBuildMode(mode);
+    exe_wasm.install();
+
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
