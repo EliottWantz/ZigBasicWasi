@@ -82,7 +82,7 @@ test "while with break" {
 test "for" {
     const string = [_]u8{ 'a', 'b', 'c' };
 
-    for (string) |char, index| {
+    for (string, 0..) |char, index| {
         std.log.info("Index = {d}, Char = {d}\n", .{ index, char });
     }
 
@@ -90,7 +90,7 @@ test "for" {
         _ = char;
     }
 
-    for (string) |_, index| {
+    for (string, 0..) |_, index| {
         _ = index;
     }
 
@@ -286,7 +286,7 @@ test "while loop expression" {
 test "optional" {
     var found_index: ?usize = null;
     const data = [_]i32{ 1, 2, 3, 4, 5, 6, 7, 8, 12 };
-    for (data) |v, i| {
+    for (data, 0..) |v, i| {
         if (v == 10) found_index = i;
     }
     try expect(found_index == null);
